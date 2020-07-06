@@ -1,0 +1,82 @@
+name: Latest Commit
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+        # For private submodules, generate PAT (https://github.com/settings/tokens) and uncomment following lines:
+        #
+        # with:
+        #   submodules: true
+        #   token: ${{ secrets.PAT }}
+
+      - name: Setup Node.js 🔨
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies 📦
+        run: |
+          yarn install
+          yarn build
+
+      - name: Test 🧪
+        run: yarn test:ci
+
+  # Auto publish after unit tests pass:
+  #
+  # publish:
+  #   needs: test
+  #   concurrency: ci-${{ github.ref }}
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout 🛎️
+  #       uses: actions/checkout@v4
+  #
+  #     - name: Setup Node.js 🔨
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         registry-url: 'https://registry.npmjs.org'
+
+  #     - name: Install Dependencies 📦
+  #       run: |
+  #         yarn install
+  #         mkdir -p dist
+
+  #     - name: Compile & Generate Types 📚
+  #       run: |
+  #         yarn compile
+  #         yarn hardhat export-abi
+  #         cp build/abi/zAceWebClient.json dist/zAceWebClient.abi.json
+  #         yarn wagmi generate
+  #         yarn typechain --target ethers-v6 --out-dir dist/ethers-v6 dist/*.abi.json
+  #         yarn typechain --target ethers-v5 --out-dir dist/ethers-v5 dist/*.abi.json
+
+  #     - name: Prepare Deploy 📦
+  #       env:
+  #         VERSION: "v0.$(date +%y)$(date +%m)$(date +%d).$(( $(date +%s) % 86400 ))"
+  #       run: |
+  #         cp contracts.testnet.json ./dist/contracts.json
+  #         cat .github/assets/package.testnet.json | jq --arg ver ${{ env.VERSION }} '.version = $ver | .version |= ltrimstr("v")' > dist/package.json
+
+  #     - name: Deploy 🚀
+  #       working-directory: dist
+  #       env:
+  #         NODE_AUTH_TOKEN: ${{ secrets.NPM_DEPLOY_KEY }}
+  #       run: |
+  #         npm install
+  #         npm ci
+  #         npm publish --access public

@@ -1,0 +1,9 @@
+{
+  "name": "@o-p/solidity-template",
+  "version": "0.0.0",
+  "license": "MIT",
+  "main": "./contracts.json",
+  "publishConfig": {
+    "access": "public"
+  }
+}
